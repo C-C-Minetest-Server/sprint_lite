@@ -1,4 +1,7 @@
+
+
 sprint_lite = {}
+local S = minetest.get_translator("sprint_lite")
 local player_info = {}
 
 --Get settingtypes
@@ -60,7 +63,7 @@ if minetest.get_modpath("hudbars") then
     hb.register_hudbar(
         "stamina",
         0xFFFFFF,
-        "Stamina",
+        S("Stamina"),
         {
             bar = "sprint_lite_bar.png",
             icon = "sprint_lite_icon.png",
