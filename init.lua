@@ -12,14 +12,16 @@ local stamina_drain = tonumber(minetest.settings:get("sprint_lite_stamina_drain"
 local stamina_regen = tonumber(minetest.settings:get("sprint_lite_stamina_regen")) or 0.1
 local stamina_threshold = tonumber(minetest.settings:get("sprint_lite_stamina_threshold")) or 8
 local spawn_particles = minetest.settings:get_bool("sprint_lite_spawn_particles", true)
-local respawn_stamina = tonumber(minetest.settings:get("sprint_lite_respawn_stamina")) or max_stamina/4
+local respawn_stamina = tonumber(minetest.settings:get("sprint_lite_respawn_stamina")) or max_stamina / 4
 local require_ground = minetest.settings:get_bool("sprint_lite_require_ground", false)
 local hudbars_enabled = false
 
 --API functions
 sprint_lite.set_stamina = function(name, amount, add)
     if type(name) ~= "string" or type(amount) ~= "number" then
-        minetest.log("error", "[sprint_lite] set_stamina: Wrong input data! Expected string and number, got " .. type(name) .. " and " .. type(amount))
+        minetest.log("error",
+            "[sprint_lite] set_stamina: Wrong input data! Expected string and number, got " ..
+            type(name) .. " and " .. type(amount))
         return false
     end
     if not player_info[name] then
@@ -78,7 +80,7 @@ end
 --Initialization functions
 minetest.register_on_joinplayer(function(player)
     local name = player:get_player_name()
-    player_info[name] = {ref = player, stamina = respawn_stamina, previous_stamina = 0, sprinting = false, grounded = false}
+    player_info[name] = { ref = player, stamina = respawn_stamina, previous_stamina = 0, sprinting = false, grounded = false }
     if hudbars_enabled then hb.init_hudbar(player, "stamina", player_info[name].stamina, max_stamina) end
 end)
 
@@ -96,28 +98,26 @@ end)
 local sprint_timer = 0
 
 minetest.register_globalstep(function(dtime)
-
     sprint_timer = sprint_timer + dtime
     if sprint_timer < step_interval then return end
 
-    for playername,playerstats in pairs(player_info) do
-
+    for playername, playerstats in pairs(player_info) do
         local pos = playerstats.ref:get_pos()
         local keys = playerstats.ref:get_player_control()
-        local node = minetest.get_node_or_nil({x = pos.x, y = pos.y - 0.5, z = pos.z})
+        local node = minetest.get_node_or_nil({ x = pos.x, y = pos.y - 0.5, z = pos.z })
 
         if node and minetest.registered_nodes[node.name] and
-        (minetest.registered_nodes[node.name].walkable or minetest.registered_nodes[node.name].liquidtype ~= "none") then
+            (minetest.registered_nodes[node.name].walkable or minetest.registered_nodes[node.name].liquidtype ~= "none") then
             playerstats.grounded = true
         else
             playerstats.grounded = false
         end
 
-        print(require_ground, playerstats.grounded, not require_ground)
+        -- print(require_ground, playerstats.grounded, not require_ground)
         if keys.aux1 and keys.up and not keys.left and not keys.right and not keys.down and not keys.sneak then
             if ((require_ground and playerstats.grounded) or not require_ground) and
-            ((not playerstats.sprinting and playerstats.stamina > stamina_threshold) or (playerstats.sprinting and playerstats.stamina > 0)) and
-            playerstats.ref:get_hp() > 0 then
+                ((not playerstats.sprinting and playerstats.stamina > stamina_threshold) or (playerstats.sprinting and playerstats.stamina > 0)) and
+                playerstats.ref:get_hp() > 0 then
                 if not playerstats.sprinting then
                     playerstats.sprinting = true
                     player_monoids.speed:add_change(playerstats.ref, speed_multiplier, "sprint_lite_sprinting")
@@ -137,7 +137,6 @@ minetest.register_globalstep(function(dtime)
         end
 
         if playerstats.sprinting and playerstats.stamina > 0 then
-
             playerstats.stamina = playerstats.stamina - stamina_drain
             if playerstats.stamina < 0 then playerstats.stamina = 0 end
 
@@ -150,18 +149,17 @@ minetest.register_globalstep(function(dtime)
             end
 
             if spawn_particles then
-
                 local texture = "tnt_smoke.png"
                 local glow = 0
-                local acceleration = {x = 0, y = -9.8, z = 0}
+                local acceleration = { x = 0, y = -9.8, z = 0 }
 
                 if playerstats.grounded and minetest.registered_nodes[node.name] then
                     if minetest.registered_nodes[node.name].tiles and
-                    type(minetest.registered_nodes[node.name].tiles[1]) == "string" then
+                        type(minetest.registered_nodes[node.name].tiles[1]) == "string" then
                         texture = minetest.registered_nodes[node.name].tiles[1]
                     end
                     if minetest.registered_nodes[node.name].liquidtype ~= "none" then
-                        acceleration = {x = 0, y = 0, z = 0}
+                        acceleration = { x = 0, y = 0, z = 0 }
                     end
                     glow = minetest.registered_nodes[node.name].light_source or 0
                 end
@@ -169,10 +167,10 @@ minetest.register_globalstep(function(dtime)
                 minetest.add_particlespawner({
                     amount = math.random(4, 8),
                     time = 0.05,
-                    minpos = {x=-0.35, y=-0.4, z=-0.35},
-                    maxpos = {x=0.35, y=-0.4, z=0.35},
-                    minvel = {x=-0.25, y=1, z=-0.25},
-                    maxvel = {x=0.25, y=3, z=0.25},
+                    minpos = { x = -0.35, y = -0.4, z = -0.35 },
+                    maxpos = { x = 0.35, y = -0.4, z = 0.35 },
+                    minvel = { x = -0.25, y = 1, z = -0.25 },
+                    maxvel = { x = 0.25, y = 3, z = 0.25 },
                     minacc = acceleration,
                     maxacc = acceleration,
                     minexptime = 1.5,
@@ -186,7 +184,6 @@ minetest.register_globalstep(function(dtime)
                     glow = glow
                 })
             end
-
         elseif playerstats.stamina < max_stamina and playerstats.ref:get_hp() > 0 then
             playerstats.stamina = playerstats.stamina + stamina_regen
             if playerstats.stamina > max_stamina then playerstats.stamina = max_stamina end
@@ -196,7 +193,6 @@ minetest.register_globalstep(function(dtime)
             playerstats.previous_stamina = playerstats.stamina
             if hudbars_enabled then hb.change_hudbar(playerstats.ref, "stamina", playerstats.stamina) end
         end
-
     end
     sprint_timer = 0
 end)
